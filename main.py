@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord import app_commands
 import os
 
-TOKEN = os.environ['DISCORD_TOKEN']
+TOKEN = os.environ['TOKEN']
 GUILD_ID = 1272252145508421632  # Replace with your server (guild) ID
 
 intents = discord.Intents.default()
