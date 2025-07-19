@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import os
+from status import get_server_status  # ⬅️ Import the function you wrote in status.py
+
 
 TOKEN = os.environ['TOKEN']
 GUILD_ID = 1272252145508421632  # Replace with your server (guild) ID
@@ -65,6 +67,13 @@ async def herobrinepanel(interaction: discord.Interaction):
     view.add_item(select)
 
     await interaction.response.send_message("Herobrine Functions", view=view, ephemeral=True)
+
+# Slash command: /status
+@bot.tree.command(name="status", description="Check Minecraft server status")
+async def status(interaction: discord.Interaction):
+    embed = await get_server_status()
+    await interaction.response.send_message(embed=embed)
+
 
 # Error handling for role restriction
 @herobrinepanel.error
