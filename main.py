@@ -92,5 +92,12 @@ async def on_ready():
     await bot.tree.sync(guild=guild)
     print(f"✅ Logged in as {bot.user}. Slash commands synced to guild {GUILD_ID}.")
 
-keep_alive()
-bot.run(TOKEN)
+import asyncio
+
+async def start():
+    await bot.load_extension("status")  # Load your cog file (status.py)
+    keep_alive()
+    bot.run(TOKEN)
+
+asyncio.run(start())
+
