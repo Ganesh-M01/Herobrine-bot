@@ -25,7 +25,7 @@ class Status(commands.Cog):
             await interaction.response.send_message(embed=embed)
 
         except Exception:
-            embed = Embed(title="🔴 Server is Offline", description="Just you wait! Server will be back online ASAP 😉", color=0xff0000)
+            embed = Embed(title="🔴 Server under Maintenance", description="Just you wait! Server will be back online ASAP 😉", color=0xff0000)
             await interaction.response.send_message(embed=embed)
 
 async def setup(bot):
