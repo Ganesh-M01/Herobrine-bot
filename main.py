@@ -3,16 +3,15 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import os
-from status import get_server_status  # ⬅️ Import the function you wrote in status.py
-
+import asyncio
 
 TOKEN = os.environ['TOKEN']
-GUILD_ID = 1272252145508421632  # Replace with your server (guild) ID
+GUILD_ID = 1272252145508421632  # Replace with your actual guild/server ID
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Modal for announcements
+# -------------------- Announcement Modal --------------------
 class AnnouncementModal(discord.ui.Modal, title="📢 Send Announcement"):
     message = discord.ui.TextInput(
         label="Announcement Message",
@@ -47,9 +46,9 @@ class AnnouncementModal(discord.ui.Modal, title="📢 Send Announcement"):
         except Exception as e:
             await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
 
-# Slash command: /herobrinepanel
+# -------------------- Herobrine Panel Slash Command --------------------
 @bot.tree.command(name="herobrinepanel", description="Herobrine Control Panel")
-@app_commands.checks.has_any_role("ADMIN", "Moderator")  # Change to your actual role names
+@app_commands.checks.has_any_role("ADMIN", "Moderator")
 async def herobrinepanel(interaction: discord.Interaction):
     view = discord.ui.View(timeout=60)
 
@@ -68,14 +67,7 @@ async def herobrinepanel(interaction: discord.Interaction):
 
     await interaction.response.send_message("Herobrine Functions", view=view, ephemeral=True)
 
-# Slash command: /status
-@bot.tree.command(name="status", description="Check Minecraft server status")
-async def status(interaction: discord.Interaction):
-    embed = await get_server_status()
-    await interaction.response.send_message(embed=embed)
-
-
-# Error handling for role restriction
+# -------------------- Error Handling --------------------
 @herobrinepanel.error
 async def herobrinepanel_error(interaction: discord.Interaction, error):
     if isinstance(error, app_commands.errors.MissingAnyRole):
@@ -84,7 +76,7 @@ async def herobrinepanel_error(interaction: discord.Interaction, error):
             ephemeral=True
         )
 
-# Bot ready event
+# -------------------- on_ready Event --------------------
 @bot.event
 async def on_ready():
     guild = discord.Object(id=GUILD_ID)
@@ -92,12 +84,10 @@ async def on_ready():
     await bot.tree.sync(guild=guild)
     print(f"✅ Logged in as {bot.user}. Slash commands synced to guild {GUILD_ID}.")
 
-import asyncio
-
+# -------------------- Load Extensions and Start Bot --------------------
 async def start():
-    await bot.load_extension("status")  # Load your cog file (status.py)
+    await bot.load_extension("status")  # Loads status.py as a cog
     keep_alive()
-    bot.run(TOKEN)
+    await bot.start(TOKEN)
 
 asyncio.run(start())
-
