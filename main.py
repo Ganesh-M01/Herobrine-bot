@@ -82,15 +82,6 @@ async def herobrinepanel(interaction: discord.Interaction):
     view.add_item(select)
     await interaction.response.send_message("Herobrine Functions", view=view, ephemeral=True)
 
-# -------------------- IP Command --------------------
-@bot.tree.command(name="ip", description="Get the server IP and port for Java & Bedrock")
-@app_commands.checks.has_any_role(ADMIN_ROLE_ID, MOD_ROLE_ID)
-async def ip(interaction: discord.Interaction):
-    embed = discord.Embed(title="🌐 Here is the IP and Port", color=discord.Color.green())
-    embed.add_field(name="💻 For Java", value="```paid.taitcloud.xyz:25575```", inline=False)
-    embed.add_field(name="📱 For Bedrock", value="**IP:** ```paid.taitcloud.xyz```\n**Port:** ```25575```", inline=False)
-    await interaction.response.send_message(embed=embed)
-
 # -------------------- Global Error Handling --------------------
 @bot.tree.error
 async def global_app_command_error(interaction: discord.Interaction, error):
