@@ -1,16 +1,32 @@
+
 import discord
 from discord import app_commands
 from discord.ext import commands
 import asyncio
 import os
+from flask import Flask
+import threading
 
-# -------------------- CONFIG --------------------
+# -------------------- Flask server (for Render port) --------------------
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Hello, Render!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 10000))  # Render provides this
+    app.run(host="0.0.0.0", port=port)
+
+# Start Flask in a separate thread
+threading.Thread(target=run_flask, daemon=True).start()
+
+# -------------------- Discord Bot --------------------
 TOKEN = os.environ['TOKEN']
 GUILD_ID = 1272252145508421632  # Replace with your server's guild ID
 
-# Role IDs for ADMIN & Moderator
-ADMIN_ROLE_ID = 1335986334673932378
-MOD_ROLE_ID = 1335986334673932378
+ADMIN_ROLE_ID = 1335986334673932378  # Replace with your admin role ID
+MOD_ROLE_ID = 1335986334673932378    # Replace with your mod role ID
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -55,11 +71,7 @@ class AnnouncementModal(discord.ui.Modal, title="📢 Send Announcement"):
 @app_commands.checks.has_any_role(ADMIN_ROLE_ID, MOD_ROLE_ID)
 async def herobrinepanel(interaction: discord.Interaction):
     view = discord.ui.View(timeout=60)
-
-    options = [
-        discord.SelectOption(label="Announcement", description="Send a server-wide announcement", emoji="📢")
-    ]
-
+    options = [discord.SelectOption(label="Announcement", description="Send a server-wide announcement", emoji="📢")]
     select = discord.ui.Select(placeholder="Select a moderator function...", options=options)
 
     async def select_callback(select_interaction: discord.Interaction):
@@ -68,46 +80,22 @@ async def herobrinepanel(interaction: discord.Interaction):
 
     select.callback = select_callback
     view.add_item(select)
-
     await interaction.response.send_message("Herobrine Functions", view=view, ephemeral=True)
 
 # -------------------- IP Command --------------------
 @bot.tree.command(name="ip", description="Get the server IP and port for Java & Bedrock")
 @app_commands.checks.has_any_role(ADMIN_ROLE_ID, MOD_ROLE_ID)
 async def ip(interaction: discord.Interaction):
-    embed = discord.Embed(
-        title="🌐 Here is the IP and Port",
-        color=discord.Color.green()
-    )
-
-    # Java
-    embed.add_field(
-        name="💻 For Java",
-        value="```paid.taitcloud.xyz:25575```",
-        inline=False
-    )
-
-    # Bedrock
-    embed.add_field(
-        name="📱 For Bedrock",
-        value="**IP:** ```paid.taitcloud.xyz```\n**Port:** ```25575```",
-        inline=False
-    )
-
-    # Send embed + banner.gif
-    file = discord.File("banner.gif", filename="banner.gif")
-    embed.set_image(url="./assets/banner.gif")
-
-    await interaction.response.send_message(embed=embed, file=file)
+    embed = discord.Embed(title="🌐 Here is the IP and Port", color=discord.Color.green())
+    embed.add_field(name="💻 For Java", value="```paid.taitcloud.xyz:25575```", inline=False)
+    embed.add_field(name="📱 For Bedrock", value="**IP:** ```paid.taitcloud.xyz```\n**Port:** ```25575```", inline=False)
+    await interaction.response.send_message(embed=embed)
 
 # -------------------- Global Error Handling --------------------
 @bot.tree.error
 async def global_app_command_error(interaction: discord.Interaction, error):
     if isinstance(error, app_commands.errors.MissingAnyRole):
-        await interaction.response.send_message(
-            "❌ You don't have permission to use this command.",
-            ephemeral=True
-        )
+        await interaction.response.send_message("❌ You don't have permission to use this command.", ephemeral=True)
 
 # -------------------- on_ready Event --------------------
 @bot.event
@@ -117,10 +105,5 @@ async def on_ready():
     await bot.tree.sync(guild=guild)
     print(f"✅ Logged in as {bot.user}. Slash commands synced to guild {GUILD_ID}.")
 
-# -------------------- Load Extensions and Start Bot --------------------
-async def start():
-    await bot.load_extension("status")  # Loads status.py as a cog
-    # keep_alive()  # Uncomment if you use Repl.it or uptime services
-    await bot.start(TOKEN)
-
-asyncio.run(start())
+# -------------------- Start Bot --------------------
+asyncio.run(bot.start(TOKEN))
