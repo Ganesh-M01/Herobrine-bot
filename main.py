@@ -85,7 +85,6 @@ async def global_app_command_error(interaction: discord.Interaction, error):
 @bot.event
 async def on_ready():
     guild = discord.Object(id=GUILD_ID)
-    bot.tree.copy_global_to(guild=guild)
     await bot.tree.sync(guild=guild)
     print(f"✅ Logged in as {bot.user}. Slash commands synced to guild {GUILD_ID}.")
 
