@@ -3,7 +3,6 @@ from discord import app_commands
 from discord.ext import commands
 import asyncio
 import os
-import keep_alive
 
 # -------------------- CONFIG --------------------
 TOKEN = os.environ['TOKEN']
@@ -85,6 +84,7 @@ async def global_app_command_error(interaction: discord.Interaction, error):
 @bot.event
 async def on_ready():
     guild = discord.Object(id=GUILD_ID)
+    bot.tree.copy_global_to(guild=guild)
     await bot.tree.sync(guild=guild)
     print(f"✅ Logged in as {bot.user}. Slash commands synced to guild {GUILD_ID}.")
 
@@ -94,5 +94,4 @@ async def start():
     await bot.load_extension("status")  # Loads status.py (for /status command)
     await bot.start(TOKEN)
 
-keep_alive.keep_alive()
 asyncio.run(start())
