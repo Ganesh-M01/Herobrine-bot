@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 import asyncio
 import os
+import keep_alive
 
 # -------------------- CONFIG --------------------
 TOKEN = os.environ['TOKEN']
@@ -94,4 +95,5 @@ async def start():
     await bot.load_extension("status")  # Loads status.py (for /status command)
     await bot.start(TOKEN)
 
+keep_alive.keep_alive()
 asyncio.run(start())

@@ -29,7 +29,10 @@ class IP(commands.Cog):
         file = File(BANNER_PATH, filename="banner.gif")
         embed.set_image(url="attachment://banner.gif")
 
-        await interaction.response.send_message(embed=embed, file=file)
+        # Add mentions in the message content
+        content = "<@&1272255683516960850> <@&1303738832683925524>"
+
+        await interaction.response.send_message(content=content, embed=embed, file=file)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(IP(bot))
