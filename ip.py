@@ -1,26 +1,31 @@
-# ip.py
 from discord.ext import commands
-from discord import app_commands, Interaction, Embed, File
+from discord import app_commands, Interaction, Embed, File, Color
 
 # ---- EDIT THESE THREE VALUES ----
-JAVA_ADDRESS   = "paid.taitcloud.xyz:25575"  # Java address (domain:port)
-BEDROCK_IP     = "paid.taitcloud.xyz"        # Bedrock IP
-BEDROCK_PORT   = 25575                     # Bedrock port
-BANNER_PATH    = "./assets/banner.gif"              # or "assets/banner.gif" if you put it in /assets
+JAVA_ADDRESS = "paid.taitcloud.xyz:25575"
+BEDROCK_IP = "paid.taitcloud.xyz"
+BEDROCK_PORT = 25575
+BANNER_PATH = "./assets/banner.gif"
 # ---------------------------------
 
 class IP(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="ip", description="Show the server IP (Java & Bedrock)")
+    @app_commands.command(name="ip", description="Get the server IP and port for Java & Bedrock")
     async def ip(self, interaction: Interaction):
-        embed = Embed(title="HERE IS THE IP AND PORT")
-        embed.add_field(name="FOR JAVA", value=f"```{JAVA_ADDRESS}```", inline=False)
-        embed.add_field(name="FOR BEDROCK\nIP", value=f"```{BEDROCK_IP}```", inline=False)
-        embed.add_field(name="PORT", value=f"```{BEDROCK_PORT}```", inline=False)
+        embed = Embed(
+            title="🌐 Here is the IP and Port",
+            color=Color.green()
+        )
+        embed.add_field(name="💻 For Java", value=f"```{JAVA_ADDRESS}```", inline=False)
+        embed.add_field(
+            name="📱 For Bedrock",
+            value=f"**IP:** ```{BEDROCK_IP}```\n**Port:** ```{BEDROCK_PORT}```",
+            inline=False
+        )
 
-        # Attach the banner and display it in the embed
+        # Attach banner.gif to embed
         file = File(BANNER_PATH, filename="banner.gif")
         embed.set_image(url="attachment://banner.gif")
 
