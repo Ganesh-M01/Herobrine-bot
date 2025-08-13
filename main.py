@@ -1,12 +1,16 @@
-from keep_alive import keep_alive
 import discord
-from discord.ext import commands
 from discord import app_commands
-import os
+from discord.ext import commands
 import asyncio
+import os
 
+# -------------------- CONFIG --------------------
 TOKEN = os.environ['TOKEN']
-GUILD_ID = 1272252145508421632  # Replace with your actual guild/server ID
+GUILD_ID = 1272252145508421632  # Replace with your server's guild ID
+
+# Role IDs for ADMIN & Moderator
+ADMIN_ROLE_ID = 1335986334673932378
+MOD_ROLE_ID = 1335986334673932378
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -48,7 +52,7 @@ class AnnouncementModal(discord.ui.Modal, title="📢 Send Announcement"):
 
 # -------------------- Herobrine Panel Slash Command --------------------
 @bot.tree.command(name="herobrinepanel", description="Herobrine Control Panel")
-@app_commands.checks.has_any_role("ADMIN", "Moderator")
+@app_commands.checks.has_any_role(ADMIN_ROLE_ID, MOD_ROLE_ID)
 async def herobrinepanel(interaction: discord.Interaction):
     view = discord.ui.View(timeout=60)
 
@@ -67,9 +71,38 @@ async def herobrinepanel(interaction: discord.Interaction):
 
     await interaction.response.send_message("Herobrine Functions", view=view, ephemeral=True)
 
-# -------------------- Error Handling --------------------
-@herobrinepanel.error
-async def herobrinepanel_error(interaction: discord.Interaction, error):
+# -------------------- IP Command --------------------
+@bot.tree.command(name="ip", description="Get the server IP and port for Java & Bedrock")
+@app_commands.checks.has_any_role(ADMIN_ROLE_ID, MOD_ROLE_ID)
+async def ip(interaction: discord.Interaction):
+    embed = discord.Embed(
+        title="🌐 Here is the IP and Port",
+        color=discord.Color.green()
+    )
+
+    # Java
+    embed.add_field(
+        name="💻 For Java",
+        value="```paid.taitcloud.xyz:25575```",
+        inline=False
+    )
+
+    # Bedrock
+    embed.add_field(
+        name="📱 For Bedrock",
+        value="**IP:** ```paid.taitcloud.xyz```\n**Port:** ```25575```",
+        inline=False
+    )
+
+    # Send embed + banner.gif
+    file = discord.File("banner.gif", filename="banner.gif")
+    embed.set_image(url="./assets/banner.gif")
+
+    await interaction.response.send_message(embed=embed, file=file)
+
+# -------------------- Global Error Handling --------------------
+@bot.tree.error
+async def global_app_command_error(interaction: discord.Interaction, error):
     if isinstance(error, app_commands.errors.MissingAnyRole):
         await interaction.response.send_message(
             "❌ You don't have permission to use this command.",
@@ -87,7 +120,7 @@ async def on_ready():
 # -------------------- Load Extensions and Start Bot --------------------
 async def start():
     await bot.load_extension("status")  # Loads status.py as a cog
-    keep_alive()
+    # keep_alive()  # Uncomment if you use Repl.it or uptime services
     await bot.start(TOKEN)
 
 asyncio.run(start())
