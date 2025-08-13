@@ -10,11 +10,11 @@ class Status(commands.Cog):
     async def status(self, interaction: Interaction):
         try:
             # Replace with your actual IP and port
-            server = JavaServer.lookup("like-titten.gl.joinmc.link:43700")
+            server = JavaServer.lookup("paid.taitcloud.xyz:25575")
             status = server.status()
 
             embed = Embed(title="🟢 Server is Online", color=0x00ff00)
-            embed.add_field(name="IP", value="like-titten.gl.joinmc.link:43700", inline=False)
+            embed.add_field(name="IP", value="paid.taitcloud.xyz:25575", inline=False)
             embed.add_field(name="Version", value="Paper 1.21.7", inline=False)
             embed.add_field(name="Players", value=f"{status.players.online}/{status.players.max}", inline=False)
 
