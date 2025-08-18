@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord import app_commands, Interaction, Embed, File, Color
+from discord import app_commands, Interaction, Embed, File, Color, AllowedMentions
 
 # ---- EDIT THESE VALUES ----
 JAVA_ADDRESS = "paid.taitcloud.xyz:25575"
@@ -38,9 +38,15 @@ class IP(commands.Cog):
             print(f"Banner file error: {e}")
             file = None
 
+        # Explicit role mentions
         content = f"<@&{SMP_ROLE_ID}> <@&{MINECRAFT_ROLE_ID}>"
 
-        await interaction.response.send_message(content=content, embed=embed, file=file if file else None)
+        await interaction.response.send_message(
+            content=content,
+            embed=embed,
+            file=file if file else None,
+            allowed_mentions=AllowedMentions(roles=True)  # ✅ allow role pings
+        )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(IP(bot))

@@ -35,6 +35,13 @@ class AnnouncementModal(discord.ui.Modal, title="📢 Send Announcement"):
         required=True,
     )
 
+    role_mentions = discord.ui.TextInput(
+        label="Role Mentions (IDs, comma-separated)",
+        placeholder="e.g., 123456789012345678,987654321098765432",
+        style=discord.TextStyle.paragraph,
+        required=False,
+    )
+
     async def on_submit(self, interaction: discord.Interaction):
         try:
             channel = bot.get_channel(int(self.channel_id.value))
@@ -48,10 +55,20 @@ class AnnouncementModal(discord.ui.Modal, title="📢 Send Announcement"):
                 color=discord.Color.red()
             )
 
-            await channel.send(embed=embed)
+            # Parse role mentions
+            mentions = ""
+            if self.role_mentions.value:
+                role_ids = [r.strip() for r in self.role_mentions.value.split(",")]
+                for rid in role_ids:
+                    if rid.isdigit():
+                        mentions += f"<@&{rid}> "
+
+            await channel.send(content=mentions if mentions else None, embed=embed)
             await interaction.response.send_message("✅ Announcement sent!", ephemeral=True)
+
         except Exception as e:
             await interaction.response.send_message(f"❌ Error: {e}", ephemeral=True)
+
 
 # -------------------- Herobrine Panel Slash Command --------------------
 @bot.tree.command(name="herobrinepanel", description="Herobrine Control Panel")
