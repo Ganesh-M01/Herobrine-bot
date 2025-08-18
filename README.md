@@ -1,6 +1,6 @@
 <h1 align="center">⚡ Herobrine Bot ⚡</h1>
 <p align="center">
-  <img src="./assets/banner.gif" alt="Herobrine Banner" width="600">
+  <img src="./assets/banner2.gif" alt="Herobrine Banner" width="600">
 </p>
 <p align="center">
   A custom <b>Discord Bot</b> built with <code>discord.py</code> to power Minecraft communities.<br>
