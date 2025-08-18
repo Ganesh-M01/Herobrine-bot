@@ -6,8 +6,11 @@ JAVA_ADDRESS = "paid.taitcloud.xyz:25575"
 BEDROCK_IP = "paid.taitcloud.xyz"
 BEDROCK_PORT = 25575
 BANNER_PATH = "./assets/banner.gif"
+
 ADMIN_ROLE_ID = 1335986334673932378
 MOD_ROLE_ID = 1335986334673932378
+SMP_ROLE_ID = 1336559018591653889   # replace with real ID
+MINECRAFT_ROLE_ID = 1303738832683925524   # replace with real ID
 # ---------------------------
 
 class IP(commands.Cog):
@@ -28,12 +31,16 @@ class IP(commands.Cog):
             inline=False
         )
 
-        file = File(BANNER_PATH, filename="banner.gif")
-        embed.set_image(url="attachment://banner.gif")
+        try:
+            file = File(BANNER_PATH, filename="banner.gif")
+            embed.set_image(url="attachment://banner.gif")
+        except Exception as e:
+            print(f"Banner file error: {e}")
+            file = None
 
-        content = "<@&GAMER_ROLE_ID> <@&MINECRAFT_ROLE_ID>"
+        content = f"<@&{SMP_ROLE_ID}> <@&{MINECRAFT_ROLE_ID}>"
 
-        await interaction.response.send_message(content=content, embed=embed, file=file)
+        await interaction.response.send_message(content=content, embed=embed, file=file if file else None)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(IP(bot))
