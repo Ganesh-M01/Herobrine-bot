@@ -2,8 +2,8 @@ from discord.ext import commands
 from discord import app_commands, Interaction, Embed, File, Color, AllowedMentions
 
 # ---- EDIT THESE VALUES ----
-JAVA_ADDRESS = "paid.taitcloud.xyz:25575"
-BEDROCK_IP = "paid.taitcloud.xyz"
+JAVA_ADDRESS = "play.ogsmp.me:25575"
+BEDROCK_IP = "play.ogsmp.me"
 BEDROCK_PORT = 25575
 BANNER_PATH = "./assets/banner.gif"
 
