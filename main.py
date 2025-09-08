@@ -15,28 +15,28 @@ intents = discord.Intents.default()
 # Bot setup
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-
 # -------- Events -------- #
 @bot.event
 async def on_ready():
-    try:
-        synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
-        print(f"✅ Synced {len(synced)} command(s) to guild {GUILD_ID}")
-    except Exception as e:
-        print(f"❌ Failed to sync commands: {e}")
-
     print(f"🤖 Logged in as {bot.user}")
 
 
 # -------- Startup -------- #
 async def main():
-    # Load cogs
-    for ext in ["ip", "status", "announce"]:  # Add more if needed
+    # Load all cogs
+    for ext in ["ip", "status", "announce"]:
         try:
             await bot.load_extension(ext)
             print(f"📂 Loaded extension: {ext}")
         except Exception as e:
             print(f"❌ Failed to load extension {ext}: {e}")
+
+    # Sync commands AFTER loading cogs
+    try:
+        synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
+        print(f"✅ Synced {len(synced)} command(s) to guild {GUILD_ID}")
+    except Exception as e:
+        print(f"❌ Failed to sync commands: {e}")
 
     # Start bot
     await bot.start(TOKEN)
