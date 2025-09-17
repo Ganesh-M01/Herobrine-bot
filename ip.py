@@ -1,10 +1,11 @@
+import discord
 from discord.ext import commands
 from discord import app_commands, Interaction, Embed, File, Color, AllowedMentions
 
 # ---- EDIT THESE VALUES ----
-JAVA_ADDRESS = "play.ogsmp.me:25575"
+JAVA_ADDRESS = "play.ogsmp.me:25565"
 BEDROCK_IP = "play.ogsmp.me"
-BEDROCK_PORT = 25575
+BEDROCK_PORT = 25565
 BANNER_PATH = "./assets/banner.gif"
 
 ADMIN_ROLE_ID = 1335986334673932378
@@ -17,8 +18,11 @@ class IP(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_load(self):
+        # Register the slash command to the bot tree
+        self.bot.tree.add_command(self.ip, guild=discord.Object(id=1272252145508421632))
+
     @app_commands.command(name="ip", description="Get the server IP and port for Java & Bedrock")
-    @app_commands.checks.has_any_role(ADMIN_ROLE_ID, MOD_ROLE_ID)
     async def ip(self, interaction: Interaction):
         embed = Embed(
             title="🌐 Here is the IP and Port",
