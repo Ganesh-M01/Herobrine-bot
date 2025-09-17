@@ -1,3 +1,4 @@
+import os
 import asyncio
 import discord
 from discord.ext import commands
@@ -10,38 +11,42 @@ class Announce(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def cog_load(self):
+        # register slash command to the tree when cog loads
+        guild = discord.Object(id=int(self.bot.GUILD_ID))
+        self.bot.tree.add_command(self.announce, guild=guild)
+
     @app_commands.command(name="announce", description="Create a guided server announcement")
     @app_commands.checks.has_any_role(ADMIN_ROLE_ID, MOD_ROLE_ID)
     async def announce(self, interaction: discord.Interaction):
-        # Defer ephemerally so all followups are hidden for the author
-        await interaction.response.defer(ephemeral=True)  # ensures subsequent followups are ephemeral [13][12]
+        await interaction.response.defer(ephemeral=True)
 
         def check(m: discord.Message):
-            return m.author.id == interaction.user.id and m.channel == interaction.channel  # gate inputs to the initiator [20]
+            return m.author.id == interaction.user.id and m.channel == interaction.channel
 
         # Step 1: Channel
-        await interaction.followup.send("📢 Starting Announcement Creation\n\nStep 1: Mention or provide the channel (#general, ID, or link).")  # ephemeral due to defer [13][12]
+        await interaction.followup.send("📢 Starting Announcement Creation\n\nStep 1: Mention or provide the channel.")
         try:
-            msg = await self.bot.wait_for("message", check=check, timeout=120)  # wait for user input [20]
+            msg = await self.bot.wait_for("message", check=check, timeout=120)
         except asyncio.TimeoutError:
-            await interaction.followup.send("⏰ Timeout! No channel provided in time.")
+            await interaction.followup.send("⏰ Timeout! No channel provided.")
             return
 
-        channel: discord.abc.Messageable | None = None
+        # Parse channel
+        channel = None
         try:
             if msg.channel_mentions:
-                channel = msg.channel_mentions
+                channel = msg.channel_mentions[0]
             elif msg.content.isdigit():
                 channel = self.bot.get_channel(int(msg.content))
             elif "discord.com/channels/" in msg.content:
-                parts = msg.content.strip().split("/")
-                channel_id = int(parts[-1])
+                channel_id = int(msg.content.strip().split("/")[-1])
                 channel = self.bot.get_channel(channel_id)
         except Exception:
             channel = None
 
-        if not isinstance(channel, (discord.TextChannel, discord.Thread, discord.ForumChannel)):
-            await interaction.followup.send("❌ Could not find that channel or it’s not a text-capable channel.")
+        if not isinstance(channel, discord.TextChannel):
+            await interaction.followup.send("❌ Could not find that text channel.")
             return
 
         # Step 2: Title
@@ -71,7 +76,7 @@ class Announce(commands.Cog):
             return
 
         # Step 4: Mentions (optional)
-        await interaction.followup.send("✅ Content set! Send any role/user mentions (or type `skip`).")
+        await interaction.followup.send("✅ Content set! Send any role/user mentions (or `skip`).")
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=120)
             mentions = "" if msg.content.lower().strip() in ("skip", "no") else msg.content
@@ -79,7 +84,7 @@ class Announce(commands.Cog):
             mentions = ""
 
         # Step 5: Image (optional)
-        await interaction.followup.send("✅ Mentions set! Send an image URL (or type `skip`).")
+        await interaction.followup.send("✅ Mentions set! Send an image URL (or `skip`).")
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=120)
             image_url = None if msg.content.lower().strip() in ("skip", "no") else msg.content.strip()
@@ -93,7 +98,7 @@ class Announce(commands.Cog):
 
         preview_text = (
             f"📢 Announcement Preview\n\n"
-            f"Channel: {getattr(channel, 'mention', str(channel))}\n"
+            f"Channel: {channel.mention}\n"
             f"Mentions: {mentions if mentions else 'None'}\n"
             f"Image: {'Yes' if image_url else 'No'}"
         )
@@ -108,16 +113,16 @@ class Announce(commands.Cog):
             return
 
         if msg.content.lower().strip() in ("yes", "confirm", "send"):
-            # Attempt to send in the chosen channel
             try:
-                await channel.send(content=mentions if mentions else None, embed=embed)  # actual public post [4]
+                await channel.send(content=mentions if mentions else None, embed=embed)
                 await interaction.followup.send(f"✅ Announcement sent to {channel.mention}!")
             except discord.Forbidden:
-                await interaction.followup.send("❌ Missing permissions to send messages or embeds in the target channel.")
+                await interaction.followup.send("❌ Missing permissions to send messages or embeds in that channel.")
             except Exception as e:
-                await interaction.followup.send(f"❌ Failed to send announcement: {e}")
+                await interaction.followup.send(f"❌ Failed to send: {e}")
         else:
             await interaction.followup.send("❌ Announcement cancelled.")
 
 async def setup(bot: commands.Bot):
+    bot.GUILD_ID = int(os.getenv("GUILD_ID"))
     await bot.add_cog(Announce(bot))
