@@ -13,10 +13,6 @@ class ServerStatus(commands.Cog):
         self.bot = bot
         self.config = {}  # guild_id -> {ip, port, type, channel_id, message_id}
 
-    async def cog_load(self):
-        # Start the update loop after the cog is loaded
-        self.update_status.start()
-
     def cog_unload(self):
         self.update_status.cancel()
 
@@ -185,7 +181,7 @@ class ServerStatus(commands.Cog):
 async def setup(bot):
     cog = ServerStatus(bot)
     await bot.add_cog(cog)
-    # Start the loop after cog is loaded
+    # Start the loop only once here
     cog.update_status.start()
     # Register setup command in dev/test guild for instant availability
     if GUILD_ID:
