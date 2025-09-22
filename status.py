@@ -5,6 +5,7 @@ from mcstatus import JavaServer, BedrockServer
 import asyncio
 import datetime
 import os
+import base64
 
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # dev/test guild ID from .env
 
@@ -103,14 +104,20 @@ class ServerStatus(commands.Cog):
                 status = server.status()
                 sample = status.players.sample or []
                 players = "\n".join([f"{i+1}. {p.name}" for i, p in enumerate(sample)]) if sample else "No players online"
+
+                favicon_data = None
+                if status.favicon:
+                    # keep the base64 favicon as a data URI for Discord embed
+                    favicon_data = status.favicon
+
                 return {
                     "online": True,
                     "ip": ip,
                     "version": status.version.name,
-                    "motd": status.description,
                     "players_online": status.players.online,
                     "players_max": status.players.max,
-                    "players_list": players
+                    "players_list": players,
+                    "favicon": favicon_data
                 }
             else:
                 server = BedrockServer.lookup(f"{ip}:{port}")
@@ -119,7 +126,6 @@ class ServerStatus(commands.Cog):
                     "online": True,
                     "ip": ip,
                     "version": status.version.brand,
-                    "motd": status.motd,
                     "players_online": status.players_online,
                     "players_max": status.players_max,
                     "players_list": "Not available for Bedrock"
@@ -148,7 +154,11 @@ class ServerStatus(commands.Cog):
             embed.add_field(name="Version", value=data["version"], inline=True)
             embed.add_field(name="Players", value=f"{data['players_online']}/{data['players_max']}", inline=False)
             embed.add_field(name="Player List", value=data["players_list"], inline=False)
-            embed.add_field(name="MOTD", value=f"```{data['motd']}```", inline=False)
+
+            # Add Java server banner if available
+            if cfg["type"] == "java" and "favicon" in data and data["favicon"]:
+                embed.set_image(url=data["favicon"])
+
         else:
             embed.add_field(name="Status", value="❌ Server Offline", inline=False)
 
