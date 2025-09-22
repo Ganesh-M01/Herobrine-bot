@@ -128,8 +128,10 @@ class ServerStatus(commands.Cog):
                     "players_max": status.players_max,
                     "players_list": "Not available for Bedrock"
                 }
-        except Exception:
+        except Exception as e:
+            print(f"❌ Could not fetch server status for {ip}:{port}: {e}")
             return {"online": False}
+
 
     async def post_or_update_status(self, guild_id):
         cfg = self.config.get(guild_id)
