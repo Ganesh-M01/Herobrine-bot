@@ -5,7 +5,6 @@ from mcstatus import JavaServer, BedrockServer
 import asyncio
 import datetime
 import os
-import base64
 
 GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # dev/test guild ID from .env
 
@@ -13,6 +12,9 @@ class ServerStatus(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = {}  # guild_id -> {ip, port, type, channel_id, message_id}
+
+    async def cog_load(self):
+        # Start the update loop after the cog is loaded
         self.update_status.start()
 
     def cog_unload(self):
@@ -107,7 +109,7 @@ class ServerStatus(commands.Cog):
 
                 favicon_data = None
                 if status.favicon:
-                    # keep the base64 favicon as a data URI for Discord embed
+                    # mcstatus returns favicon as data URI, compatible with Discord embed
                     favicon_data = status.favicon
 
                 return {
@@ -174,15 +176,17 @@ class ServerStatus(commands.Cog):
         except discord.Forbidden:
             print("❌ Bot missing permissions to send/edit messages.")
 
-@tasks.loop(seconds=30)  # update every 30 seconds
-async def update_status(self):
-    for guild_id in self.config.keys():
-        await self.post_or_update_status(guild_id)
+    @tasks.loop(seconds=30)  # update twice per minute
+    async def update_status(self):
+        for guild_id in self.config.keys():
+            await self.post_or_update_status(guild_id)
 
 # ----------------- Cog Setup ----------------- #
 async def setup(bot):
     cog = ServerStatus(bot)
     await bot.add_cog(cog)
+    # Start the loop after cog is loaded
+    cog.update_status.start()
     # Register setup command in dev/test guild for instant availability
     if GUILD_ID:
         bot.tree.add_command(cog.setup, guild=discord.Object(id=GUILD_ID))
