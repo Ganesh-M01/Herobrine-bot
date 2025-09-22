@@ -174,10 +174,10 @@ class ServerStatus(commands.Cog):
         except discord.Forbidden:
             print("❌ Bot missing permissions to send/edit messages.")
 
-    @tasks.loop(minutes=2)
-    async def update_status(self):
-        for guild_id in self.config.keys():
-            await self.post_or_update_status(guild_id)
+@tasks.loop(seconds=30)  # update every 30 seconds
+async def update_status(self):
+    for guild_id in self.config.keys():
+        await self.post_or_update_status(guild_id)
 
 # ----------------- Cog Setup ----------------- #
 async def setup(bot):
