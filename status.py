@@ -4,21 +4,18 @@ from discord import app_commands
 from mcstatus import JavaServer, BedrockServer
 import asyncio
 import datetime
+import os
+
+GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # dev/test guild ID from .env
 
 class ServerStatus(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = {}  # guild_id -> {ip, port, type, channel_id, message_id}
         self.update_status.start()
-        # Ensure the command is added to the bot tree
-        #self.bot.tree.add_command(self.setup)
 
     def cog_unload(self):
         self.update_status.cancel()
-        try:
-            self.bot.tree.remove_command("setup")
-        except:
-            pass
 
     # ----------------- Slash Command ----------------- #
     @app_commands.command(name="setup", description="Setup the Minecraft server status monitor")
@@ -174,4 +171,8 @@ class ServerStatus(commands.Cog):
 
 # ----------------- Cog Setup ----------------- #
 async def setup(bot):
-    await bot.add_cog(ServerStatus(bot))
+    cog = ServerStatus(bot)
+    await bot.add_cog(cog)
+    # Register setup command in dev/test guild for instant availability
+    if GUILD_ID:
+        bot.tree.add_command(cog.setup, guild=discord.Object(id=GUILD_ID))
