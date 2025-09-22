@@ -29,7 +29,7 @@ async def load_extensions():
             print(f"❌ Failed to load extension {ext}: {e}")
 
 async def sync_commands():
-    # Prefer guild-scoped sync for instant iteration
+    # Guild-scoped sync for instant iteration
     if GUILD_ID:
         guild_obj = discord.Object(id=GUILD_ID)
         synced = await bot.tree.sync(guild=guild_obj)

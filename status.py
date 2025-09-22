@@ -10,21 +10,31 @@ class ServerStatus(commands.Cog):
         self.bot = bot
         self.config = {}  # guild_id -> {ip, port, type, channel_id, message_id}
         self.update_status.start()
+        # Ensure the command is added to the bot tree
+        self.bot.tree.add_command(self.setup)
 
     def cog_unload(self):
         self.update_status.cancel()
+        try:
+            self.bot.tree.remove_command("setup")
+        except:
+            pass
 
     # ----------------- Slash Command ----------------- #
     @app_commands.command(name="setup", description="Setup the Minecraft server status monitor")
     @app_commands.checks.has_permissions(administrator=True)
     async def setup(self, interaction: discord.Interaction):
-        await interaction.response.send_message("⚙️ Let's set up your server status! Please answer the following:", ephemeral=True)
+        await interaction.response.send_message(
+            "⚙️ Let's set up your server status! Please answer the following:", ephemeral=True
+        )
 
         def check(m: discord.Message):
             return m.author.id == interaction.user.id and m.channel == interaction.channel
 
         # Step 1: IP
-        await interaction.followup.send("🌍 Step 1: Please provide the **server IP** (e.g., `play.example.com`):", ephemeral=True)
+        await interaction.followup.send(
+            "🌍 Step 1: Please provide the **server IP** (e.g., `play.example.com`):", ephemeral=True
+        )
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=120)
             ip = msg.content.strip()
@@ -33,7 +43,9 @@ class ServerStatus(commands.Cog):
             return
 
         # Step 2: Port
-        await interaction.followup.send("🔌 Step 2: Provide the **server port** (e.g., `25565`):", ephemeral=True)
+        await interaction.followup.send(
+            "🔌 Step 2: Provide the **server port** (e.g., `25565`):", ephemeral=True
+        )
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=120)
             port = int(msg.content.strip())
@@ -42,7 +54,10 @@ class ServerStatus(commands.Cog):
             return
 
         # Step 3: Type
-        await interaction.followup.send("🎮 Step 3: Is this a **Java** or **Bedrock** server? (type exactly `java` or `bedrock`)", ephemeral=True)
+        await interaction.followup.send(
+            "🎮 Step 3: Is this a **Java** or **Bedrock** server? (type exactly `java` or `bedrock`)",
+            ephemeral=True
+        )
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=120)
             srv_type = msg.content.lower().strip()
@@ -53,7 +68,10 @@ class ServerStatus(commands.Cog):
             return
 
         # Step 4: Channel
-        await interaction.followup.send("📢 Step 4: Do you want the status here or mention another channel? (type `here` or mention #channel)", ephemeral=True)
+        await interaction.followup.send(
+            "📢 Step 4: Do you want the status here or mention another channel? (type `here` or mention #channel)",
+            ephemeral=True
+        )
         try:
             msg = await self.bot.wait_for("message", check=check, timeout=120)
             if msg.content.lower().strip() == "here":
@@ -122,7 +140,10 @@ class ServerStatus(commands.Cog):
             return
 
         data = await self.fetch_status(cfg["ip"], cfg["port"], cfg["type"])
-        embed = discord.Embed(title="📊 Minecraft Server Status", color=discord.Color.green() if data["online"] else discord.Color.red())
+        embed = discord.Embed(
+            title="📊 Minecraft Server Status",
+            color=discord.Color.green() if data["online"] else discord.Color.red()
+        )
 
         if data["online"]:
             embed.add_field(name="IP", value=data["ip"], inline=False)
@@ -151,5 +172,6 @@ class ServerStatus(commands.Cog):
         for guild_id in self.config.keys():
             await self.post_or_update_status(guild_id)
 
+# ----------------- Cog Setup ----------------- #
 async def setup(bot):
     await bot.add_cog(ServerStatus(bot))
