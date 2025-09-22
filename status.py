@@ -11,7 +11,7 @@ class ServerStatus(commands.Cog):
         self.config = {}  # guild_id -> {ip, port, type, channel_id, message_id}
         self.update_status.start()
         # Ensure the command is added to the bot tree
-        self.bot.tree.add_command(self.setup)
+        #self.bot.tree.add_command(self.setup)
 
     def cog_unload(self):
         self.update_status.cancel()
