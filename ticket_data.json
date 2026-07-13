@@ -1,0 +1,15 @@
+{
+  "guilds": {
+    "1272252145508421632": {
+      "category_id": 1272257051044745366,
+      "log_channel_id": 1381701141468938270,
+      "support_role_id": 1335986334673932378,
+      "topics": [
+        "General Support",
+        "SMP Support"
+      ],
+      "ticket_counter": 2
+    }
+  },
+  "tickets": {}
+}
