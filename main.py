@@ -14,7 +14,7 @@ intents.message_content = True  # your /announce flow uses wait_for on messages
 
 # Bot setup
 bot = commands.Bot(command_prefix="!", intents=intents)
-EXTENSIONS = ["ip", "status", "announce", "tickets"]
+EXTENSIONS = ["ip", "status", "announce", "tickets", "youtube_live"]
 
 @bot.event
 async def on_ready():
