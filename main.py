@@ -10,11 +10,13 @@ GUILD_ID = int(os.getenv("GUILD_ID", "0"))  # set in .env for dev-guild sync
 
 # Intents
 intents = discord.Intents.default()
-intents.message_content = True  # your /announce flow uses wait_for on messages
+intents.message_content = True
+intents.members = True   # add this — needed for on_member_join/on_member_remove
+intents.invites = True   # add this — needed for on_invite_create/on_invite_delete
 
 # Bot setup
 bot = commands.Bot(command_prefix="!", intents=intents)
-EXTENSIONS = ["ip", "status", "announce", "tickets", "youtube_live"]
+EXTENSIONS = ["ip", "status", "announce", "tickets", "youtube_live", "invite_tracker"]
 
 @bot.event
 async def on_ready():
