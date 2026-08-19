@@ -1,4 +1,12 @@
 {
-  "last_video_id": "BJ4H2B8Z-_E",
-  "is_live": false
+  "channels": {
+    "UCVBMaGpZ0RK_woo-xNNqOwQ": {
+      "last_video_id": "QSkuOX00lo4",
+      "is_live": false
+    },
+    "UCxPS_wmBWUmcVfq8l3CfT1w": {
+      "last_video_id": "xui-1EXwh7M",
+      "is_live": true
+    }
+  }
 }

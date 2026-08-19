@@ -6,19 +6,26 @@ from discord.ext import commands, tasks
 
 # ── Config (set these in your .env) ─────────────────────────────
 # YOUTUBE_API_KEY        -> YouTube Data API v3 key (Google Cloud Console)
-# YOUTUBE_CHANNEL_ID     -> the UC... channel ID to watch (NOT the @handle)
-# YT_ANNOUNCE_CHANNEL_ID -> Discord channel ID to post the notification in
+# YOUTUBE_CHANNEL_IDS    -> comma-separated list of UC... channel IDs to watch
+#                           (e.g. "UCxxxxxxxx,UCyyyyyyyy"). For a single
+#                           channel, YOUTUBE_CHANNEL_ID (singular) still works.
+# YT_ANNOUNCE_CHANNEL_ID -> Discord channel ID to post notifications in (shared)
 # YT_PING_ROLE_ID        -> Discord role ID to ping (optional; omit to skip ping)
 # YT_CHECK_INTERVAL_MIN  -> minutes between checks (default 10)
 #
-# NOTE ON QUOTA: search.list costs 100 units/call, default daily quota is
-# 10,000 units (~100 calls/day). At the default 10-min interval that's
-# ~144 calls/day, which can exceed quota on a busy day. If you hit quota
-# errors, either raise YT_CHECK_INTERVAL_MIN or request a quota increase
-# in Google Cloud Console.
+# NOTE ON QUOTA: search.list costs 100 units/call, PER CHANNEL WATCHED.
+# Default daily quota is 10,000 units. With N channels watched, max checks/day
+# = 10000 / (100 * N). For 2 channels that's ~50 checks/day, i.e. an interval
+# of at least ~29 minutes to stay under quota. The default below (10 min) is
+# safe for 1 channel but will exceed quota with 2+ channels — raise
+# YT_CHECK_INTERVAL_MIN accordingly, or request a quota increase in Google
+# Cloud Console.
 
 API_KEY = os.getenv("YOUTUBE_API_KEY")
-CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID")
+
+_raw_ids = os.getenv("YOUTUBE_CHANNEL_IDS") or os.getenv("YOUTUBE_CHANNEL_ID", "")
+CHANNEL_IDS = [c.strip() for c in _raw_ids.split(",") if c.strip()]
+
 ANNOUNCE_CHANNEL_ID = int(os.getenv("YT_ANNOUNCE_CHANNEL_ID", "0"))
 PING_ROLE_ID = int(os.getenv("YT_PING_ROLE_ID", "0"))
 CHECK_INTERVAL_MIN = int(os.getenv("YT_CHECK_INTERVAL_MIN", "10"))
@@ -28,13 +35,26 @@ SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 
 
 def _load_data():
+    default = {"channels": {}}
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r") as f:
-                return json.load(f)
+                raw = json.load(f)
         except (json.JSONDecodeError, OSError):
-            pass
-    return {"last_video_id": None, "is_live": False}
+            return default
+
+        # Migrate old single-channel format: {"last_video_id":.., "is_live":..}
+        if "channels" not in raw and "last_video_id" in raw and CHANNEL_IDS:
+            return {
+                "channels": {
+                    CHANNEL_IDS[0]: {
+                        "last_video_id": raw.get("last_video_id"),
+                        "is_live": raw.get("is_live", False),
+                    }
+                }
+            }
+        return raw
+    return default
 
 
 def _save_data(data):
@@ -48,9 +68,9 @@ class YouTubeLive(commands.Cog):
         self.data = _load_data()
         self.session: aiohttp.ClientSession | None = None
 
-        if not API_KEY or not CHANNEL_ID:
+        if not API_KEY or not CHANNEL_IDS:
             print("⚠️  YouTube live notifications disabled: "
-                  "YOUTUBE_API_KEY or YOUTUBE_CHANNEL_ID not set in .env")
+                  "YOUTUBE_API_KEY or YOUTUBE_CHANNEL_IDS not set in .env")
             return
 
         if not ANNOUNCE_CHANNEL_ID:
@@ -58,8 +78,13 @@ class YouTubeLive(commands.Cog):
                   "YT_ANNOUNCE_CHANNEL_ID not set in .env")
             return
 
+        for cid in CHANNEL_IDS:
+            self.data["channels"].setdefault(cid, {"last_video_id": None, "is_live": False})
+        _save_data(self.data)
+
         self.check_live.change_interval(minutes=CHECK_INTERVAL_MIN)
         self.check_live.start()
+        print(f"📺 Watching {len(CHANNEL_IDS)} YouTube channel(s) for live streams")
 
     def cog_unload(self):
         self.check_live.cancel()
@@ -71,39 +96,42 @@ class YouTubeLive(commands.Cog):
 
     @tasks.loop(minutes=10)  # overwritten by change_interval in __init__
     async def check_live(self):
-        try:
-            video = await self._get_current_live_video()
-        except Exception as e:
-            print(f"❌ YouTube live check failed: {e}")
-            return
+        for cid in CHANNEL_IDS:
+            try:
+                await self._check_one_channel(cid)
+            except Exception as e:
+                print(f"❌ YouTube live check failed for {cid}: {e}")
+
+    async def _check_one_channel(self, channel_id: str):
+        video = await self._get_current_live_video(channel_id)
+        state = self.data["channels"].setdefault(channel_id, {"last_video_id": None, "is_live": False})
 
         if video is None:
-            # Not live right now
-            if self.data.get("is_live"):
-                self.data["is_live"] = False
+            if state.get("is_live"):
+                state["is_live"] = False
                 _save_data(self.data)
             return
 
         video_id = video["id"]["videoId"]
 
         # Already announced this exact stream
-        if self.data.get("is_live") and self.data.get("last_video_id") == video_id:
+        if state.get("is_live") and state.get("last_video_id") == video_id:
             return
 
         await self._announce(video)
-        self.data["is_live"] = True
-        self.data["last_video_id"] = video_id
+        state["is_live"] = True
+        state["last_video_id"] = video_id
         _save_data(self.data)
 
     @check_live.before_loop
     async def before_check_live(self):
         await self.bot.wait_until_ready()
 
-    async def _get_current_live_video(self):
+    async def _get_current_live_video(self, channel_id: str):
         """Returns the live video's search.list item dict, or None if not live."""
         params = {
             "key": API_KEY,
-            "channelId": CHANNEL_ID,
+            "channelId": channel_id,
             "part": "snippet",
             "eventType": "live",
             "type": "video",
@@ -149,13 +177,13 @@ class YouTubeLive(commands.Cog):
             content = f"<@&{PING_ROLE_ID}>"
 
         await channel.send(content=content, embed=embed)
-        print(f"📺 Announced live stream: {title}")
+        print(f"📺 Announced live stream: {title} ({channel_title})")
 
     @commands.command(name="ytcheck")
     @commands.has_permissions(administrator=True)
     async def ytcheck(self, ctx: commands.Context):
-        """Manually trigger a live-status check (admin only)."""
-        await ctx.send("🔍 Checking YouTube live status...")
+        """Manually trigger a live-status check for all watched channels (admin only)."""
+        await ctx.send(f"🔍 Checking YouTube live status for {len(CHANNEL_IDS)} channel(s)...")
         await self.check_live()
         await ctx.send("✅ Check complete.")
 
