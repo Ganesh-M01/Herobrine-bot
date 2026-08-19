@@ -16,7 +16,7 @@ intents.invites = True   # add this — needed for on_invite_create/on_invite_de
 
 # Bot setup
 bot = commands.Bot(command_prefix="!", intents=intents)
-EXTENSIONS = ["ip", "status", "announce", "tickets", "youtube_live", "invite_tracker"]
+EXTENSIONS = ["ip", "announce", "tickets", "youtube_live", "invite_tracker", "counting", "mc_status"]
 
 @bot.event
 async def on_ready():
